@@ -5,6 +5,28 @@ Time: 60–75 minutes · Level: beginner cloud / Windows admin · Free tier elig
 
 ---
 
+## Table of Contents
+
+- [What you are building](#what-you-are-building)
+- [Why this works on all three clouds](#why-this-works-on-all-three-clouds)
+- [What you will learn](#what-you-will-learn)
+- [Step 0 — Create the VM](#step-0--create-the-vm)
+- [Step 1 — Install IIS and publish the site](#step-1--install-iis-and-publish-the-site)
+- [Step 2 — Collect the status](#step-2--collect-the-status)
+- [Step 3 — Give it a heartbeat](#step-3--give-it-a-heartbeat)
+- [Step 4 — Reach it from your laptop](#step-4--reach-it-from-your-laptop)
+- [Step 5 — Verify, then break it](#step-5--verify-then-break-it)
+- [Deployment Result](#deployment-result)
+- [Verification](#verification)
+- [Proof / Screenshots](#proof--screenshots)
+- [Submission](#submission)
+- [Clean up — do this or you will be billed](#clean-up--do-this-or-you-will-be-billed)
+- [Troubleshooting](#troubleshooting)
+- [Optional challenges](#optional-challenges)
+- [Repository contents](#repository-contents)
+
+---
+
 ## What you are building
 
 A Windows Server VM in the cloud that **serves a live report about itself**.
@@ -183,6 +205,65 @@ Then two experiments:
 
 1. **Reboot the VM.** Wait two minutes, reconnect to the same address. Everything comes back on its own — IIS because its service is automatic, the collector because of the at-startup trigger.
 2. **Stop the VM, then start it again.** On AWS and GCP the public IP has changed. On Azure it probably has not. The hostname and private IP are the same everywhere.
+
+---
+
+## Deployment Result
+
+- Windows Server deployed on AWS EC2
+- IIS configured to host the HealthCard site
+- PowerShell collector generates `data/status.json`
+- Scheduled Task runs the collector automatically
+- The health card displays server information and resource usage
+- `4-Verify.ps1` successfully checks the deployment
+
+---
+
+## Verification
+
+The deployment was verified locally through IIS and automatically validated using the `4-Verify.ps1` PowerShell script. The verification process checks the following 9 key components:
+
+1. IIS role
+2. W3SVC service
+3. HealthCard site
+4. Port binding
+5. deployment.json
+6. status.json
+7. status.json freshness
+8. HTTP 200 response
+9. status.json HTTP access
+
+The automated verification script confirmed a final result of **Passed: 9 / 9** and **Failed: 0 / 9**, confirming that all deployment requirements were fully met.
+
+---
+
+## Proof / Screenshots
+
+The screenshots below provide proof of the deployment and verification steps.
+
+### 1. HealthCard Web Interface Running on Localhost
+![HealthCard Web Interface Running on Localhost](images/L1.png)
+This screenshot proves that the HealthCard web application is active and reachable on `http://localhost`. It displays real-time server information, including hostname (`EC2AMAZ-R84MMU3`), region (`ap-south-1`), IP addresses (Private: `172.31.2.96`, Public: `13.232.57.222`), Windows Server OS details, IIS site status, and system capacity metrics.
+
+### 2. Status Data File (status.json) Generation
+![Status Data File status.json Generation](images/L2.png)
+This screenshot proves that the PowerShell status collector successfully generates the `status.json` file inside the IIS web root directory (`C:\inetpub\HealthCard\data`). This JSON file serves as the dynamic data source rendered by the HealthCard web interface.
+
+### 3. Automated Scheduled Task Setup
+![Automated Scheduled Task Setup](images/L3.png)
+This screenshot proves the successful registration and activation of the `HealthCard-Collector` scheduled task via `3-Schedule-Collector.ps1`. The task is configured to run every minute under the `SYSTEM` account to keep server status data current.
+
+### 4. IIS Web Server Local Response Verification
+![IIS Web Server Local Response Verification](images/L4.png)
+This screenshot proves that IIS is properly serving the website locally, returning an HTTP `200 OK` response status when requested via `Invoke-WebRequest http://localhost/`. It confirms web server responsiveness and default document rendering.
+
+### 5. Automated Verification Script Execution (4-Verify.ps1)
+![Automated Verification Script Execution](images/L5.png)
+This screenshot proves that all deployment checks passed successfully when running `4-Verify.ps1` inside the AWS EC2 Remote Desktop session. The script confirmed a result of `Passed: 9 / 9` and `Failed: 0 / 9` across all IIS, task, status file, and HTTP response checks.
+
+### 6. Collector Scheduled Task Execution and Control Testing
+![Collector Scheduled Task Execution and Control Testing](images/L6.png)
+This screenshot proves manual control and timestamp verification of the `HealthCard-Collector` task using PowerShell cmdlets (`Start-ScheduledTask`, `Disable-ScheduledTask`, `Enable-ScheduledTask`). It confirms that triggering the task updates the `LastWriteTime` timestamp of `status.json` and verifies task state toggles.
 
 ---
 
