@@ -52,7 +52,6 @@ if (Test-Path $DeploymentFile) {
 }
 
 # --- 2. Private IPv4 -------------------------------------------------------------
-# Skip loopback and the 169.254.x link-local range, which is not a usable address.
 $privateIp = (Get-NetIPAddress -AddressFamily IPv4 |
     Where-Object { $_.IPAddress -notlike '127.*' -and
                    $_.IPAddress -notlike '169.254.*' -and
@@ -63,9 +62,9 @@ $privateIp = (Get-NetIPAddress -AddressFamily IPv4 |
 $publicIp = $null
 $publicIpSource = 'unreachable'
 $lookups = @(
-    @{ Name = 'api.ipify.org';      Url = 'https://api.ipify.org' },
+    @{ Name = 'api.ipify.org';        Url = 'https://api.ipify.org' },
     @{ Name = 'checkip.amazonaws.com'; Url = 'https://checkip.amazonaws.com' },
-    @{ Name = 'ifconfig.me';        Url = 'https://ifconfig.me/ip' }
+    @{ Name = 'ifconfig.me';          Url = 'https://ifconfig.me/ip' }
 )
 foreach ($l in $lookups) {
     try {

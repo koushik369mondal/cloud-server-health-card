@@ -25,23 +25,25 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# Administrator check
 $id = [Security.Principal.WindowsIdentity]::GetCurrent()
 if (-not (New-Object Security.Principal.WindowsPrincipal($id)).IsInRole(
         [Security.Principal.WindowsBuiltInRole]::Administrator)) {
     throw "Run this script from an elevated PowerShell window."
 }
 
+# Copy collector to a stable location
 $collector = Join-Path $PSScriptRoot '2-Collect-Status.ps1'
 if (-not (Test-Path $collector)) { throw "Collector not found at $collector" }
 
-# Copy it somewhere stable. A task pointing at someone's Downloads folder breaks
-# the first time that folder is cleaned up.
 New-Item -Path 'C:\LabTools' -ItemType Directory -Force | Out-Null
 Copy-Item $collector -Destination 'C:\LabTools' -Force
 $installed = 'C:\LabTools\2-Collect-Status.ps1'
-Write-Host "    [ok] Collector installed to $installed" -ForegroundColor Green
+Write-Host "[OK] Collector installed to $installed" -ForegroundColor Green
 
-Write-Host "`n==> Registering scheduled task '$TaskName'" -ForegroundColor Cyan
+# Register the scheduled task
+Write-Host ""
+Write-Host "==> Registering scheduled task '$TaskName'" -ForegroundColor Cyan
 if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
     Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
 }
@@ -64,9 +66,11 @@ Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $triggers `
     -Principal $principal -Settings $settings `
     -Description 'Writes host status to the IIS web root for the health card lab.' | Out-Null
 
-Write-Host "    [ok] Runs every $IntervalMinutes minute(s) as SYSTEM" -ForegroundColor Green
+Write-Host "[OK] Runs every $IntervalMinutes minute(s) as SYSTEM" -ForegroundColor Green
 
-Write-Host "`n==> Running it once now" -ForegroundColor Cyan
+# Run once now and verify
+Write-Host ""
+Write-Host "==> Running it once now" -ForegroundColor Cyan
 Start-ScheduledTask -TaskName $TaskName
 Start-Sleep -Seconds 10
 
@@ -77,8 +81,9 @@ Write-Host "    Next run    : $($info.NextRunTime)"
 
 if (Test-Path $OutputPath) {
     $age = [int]((Get-Date) - (Get-Item $OutputPath).LastWriteTime).TotalSeconds
-    Write-Host "    [ok] status.json written $age seconds ago" -ForegroundColor Green
-    Write-Host "`nReload the page and watch the pulse strip." -ForegroundColor Green
+    Write-Host "[OK] status.json written $age seconds ago" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Reload the page and watch the pulse strip." -ForegroundColor Green
 } else {
-    Write-Host "    [!!] $OutputPath was not created. Run the collector by hand with -Verbose." -ForegroundColor Yellow
+    Write-Host "[!!] $OutputPath was not created. Run the collector by hand with -Verbose." -ForegroundColor Yellow
 }
