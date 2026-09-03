@@ -18,7 +18,7 @@ Time: 60–75 minutes · Level: beginner cloud / Windows admin · Free tier elig
 - [Step 5 — Verify, then break it](#step-5--verify-then-break-it)
 - [Deployment Result](#deployment-result)
 - [Verification](#verification)
-- [Proof / Screenshots](#proof--screenshots)
+- [Screenshots](#screenshots)
 - [Submission](#submission)
 - [Clean up — do this or you will be billed](#clean-up--do-this-or-you-will-be-billed)
 - [Troubleshooting](#troubleshooting)
@@ -237,7 +237,7 @@ The automated verification script confirmed a final result of **Passed: 9 / 9** 
 
 ---
 
-## Proof / Screenshots
+## Screenshots
 
 The screenshots below provide proof of the deployment and verification steps.
 
