@@ -243,6 +243,7 @@ The screenshots below provide proof of the deployment and verification steps.
 
 ### 1. HealthCard Web Interface Running on Localhost
 ![HealthCard Web Interface Running on Localhost](images/L1.png)
+
 This screenshot proves that the HealthCard web application is active and reachable on `http://localhost`. It displays real-time server information, including hostname (`EC2AMAZ-R84MMU3`), region (`ap-south-1`), IP addresses (Private: `172.31.2.96`, Public: `13.232.57.222`), Windows Server OS details, IIS site status, and system capacity metrics.
 
 ### 2. Status Data File (status.json) Generation
