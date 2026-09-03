@@ -1,0 +1,38 @@
+{
+  "generatedAtUtc": "2026-08-26T06:12:04Z",
+  "collectorVersion": "1.0.0",
+  "deployment": {
+    "cloud": "AWS",
+    "region": "ap-south-1",
+    "zone": "ap-south-1b",
+    "machineSize": "t3.micro",
+    "owner": "priya",
+    "notes": "IIS lab, session 1"
+  },
+  "network": {
+    "privateIpv4": "10.0.1.47",
+    "publicIpv4": "13.234.10.22",
+    "publicIpSource": "api.ipify.org"
+  },
+  "host": {
+    "computerName": "WIN-LAB-01",
+    "osCaption": "Microsoft Windows Server 2022 Datacenter",
+    "uptime": "0 d 04 h 18 m",
+    "cpuLoadPercent": 7,
+    "memoryUsedGb": 1.4,
+    "memoryTotalGb": 3.8,
+    "memoryLabel": "1.4 / 3.8 GB",
+    "diskCFreeGb": 21.6,
+    "diskCTotalGb": 30,
+    "diskLabel": "8.4 / 30 GB",
+    "iisSiteName": "HealthCard",
+    "iisSiteState": "Started"
+  },
+  "pulses": [
+    { "t": "2026-08-26T06:08:04Z", "ok": true },
+    { "t": "2026-08-26T06:09:04Z", "ok": true },
+    { "t": "2026-08-26T06:10:04Z", "ok": true },
+    { "t": "2026-08-26T06:11:04Z", "ok": true },
+    { "t": "2026-08-26T06:12:04Z", "ok": true }
+  ]
+}

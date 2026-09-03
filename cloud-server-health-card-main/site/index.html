@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Server health card</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:,">
+</head>
+<body>
+
+<div class="card">
+
+  <header class="head">
+    <div>
+      <span class="eyebrow" id="cloud-badge">cloud unset</span>
+      <h1 id="computer-name">awaiting collector</h1>
+      <p class="head__sub">This page is a static file. Everything below was written to disk by a
+        PowerShell script running on the machine that served it to you.</p>
+    </div>
+    <dl class="stamp">
+      <div><dt>Region</dt><dd data-field="deployment.region">—</dd></div>
+      <div><dt>Zone</dt><dd data-field="deployment.zone">—</dd></div>
+      <div><dt>Size</dt><dd data-field="deployment.machineSize">—</dd></div>
+      <div><dt>Owner</dt><dd data-field="deployment.owner">—</dd></div>
+    </dl>
+  </header>
+
+  <section class="pulse">
+    <div class="pulse__head">
+      <h2>Collector pulse</h2>
+      <p class="pulse__legend">One step per run. Newest on the right.</p>
+    </div>
+    <svg class="pulse__wave" id="pulse-wave" viewBox="0 0 600 54" preserveAspectRatio="none"
+         role="img" aria-label="Timing diagram of recent collector runs"></svg>
+    <div class="pulse__foot">
+      <span class="dot" id="pulse-dot" data-state="stale"></span>
+      <span id="pulse-status">No data file found yet.</span>
+      <span class="pulse__age" id="pulse-age"></span>
+    </div>
+  </section>
+
+  <div class="grid">
+
+    <section class="block">
+      <h2>Two addresses</h2>
+      <table class="spec">
+        <tr><th>Private IPv4</th><td data-field="network.privateIpv4">—</td></tr>
+        <tr><th>Public IPv4</th><td data-field="network.publicIpv4">—</td></tr>
+        <tr><th>Hostname</th><td data-field="host.computerName">—</td></tr>
+        <tr><th>You reached it via</th><td id="served-host">—</td></tr>
+      </table>
+      <p class="note">The server learned its public address by asking
+        <b data-field="network.publicIpSource">an outside service</b>. It cannot see that address
+        on any of its own network adapters.</p>
+    </section>
+
+    <section class="block">
+      <h2>Machine</h2>
+      <table class="spec">
+        <tr><th>Operating system</th><td data-field="host.osCaption">—</td></tr>
+        <tr><th>Uptime</th><td data-field="host.uptime">—</td></tr>
+        <tr><th>IIS site</th><td data-field="host.iisSiteName">—</td></tr>
+        <tr><th>Site state</th><td data-field="host.iisSiteState">—</td></tr>
+      </table>
+    </section>
+
+    <section class="block">
+      <h2>Capacity</h2>
+      <div class="gauges">
+        <div class="gauge" data-gauge="cpu">
+          <div class="gauge__top"><span>Processor</span><b>—</b></div>
+          <div class="bar"><i style="width:0%"></i></div>
+        </div>
+        <div class="gauge" data-gauge="mem">
+          <div class="gauge__top"><span>Memory</span><b>—</b></div>
+          <div class="bar"><i style="width:0%"></i></div>
+        </div>
+        <div class="gauge" data-gauge="disk">
+          <div class="gauge__top"><span>Disk C:</span><b>—</b></div>
+          <div class="bar"><i style="width:0%"></i></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="colophon">
+    <p>Data file <code>data/status.json</code> · collector <span data-field="collectorVersion">—</span> ·
+      page refreshes every 15&nbsp;s · health check at <a href="health.txt">/health.txt</a></p>
+    <p class="colophon__warn" id="error-line" hidden></p>
+  </footer>
+
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
