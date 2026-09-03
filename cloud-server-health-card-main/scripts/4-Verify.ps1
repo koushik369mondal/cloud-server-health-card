@@ -1,29 +1,31 @@
-<#
-.SYNOPSIS
-    Runs nine checks against your deployment and prints a pass/fail report.
-
-.DESCRIPTION
-    Run this before you submit. It checks the same things the instructor will,
-    and every failure line tells you which step to go back to.
-
-.EXAMPLE
-    .\4-Verify.ps1
-    .\4-Verify.ps1 -Port 8080
-#>
+# Step 4 - Verify the Health Card deployment
 
 [CmdletBinding()]
 param(
-    [string]$SiteName     = 'HealthCard',
-    [int]   $Port         = 80,
+    [string]$SiteName = 'HealthCard',
+    [int]   $Port = 80,
     [string]$PhysicalPath = 'C:\inetpub\HealthCard',
-    [string]$TaskName     = 'HealthCard-Collector'
+    [string]$TaskName = 'HealthCard-Collector'
 )
 
 $results = @()
+
 function Check {
-    param([string]$Name, [scriptblock]$Test, [string]$Fix)
+    param(
+        [string]$Name,
+        [scriptblock]$Test,
+        [string]$Fix
+    )
+
     $pass = $false
-    try { $pass = [bool](& $Test) } catch { }
+
+    try {
+        $pass = [bool](& $Test)
+    }
+    catch {
+        $pass = $false
+    }
+
     $script:results += [pscustomobject]@{
         Result = if ($pass) { 'PASS' } else { 'FAIL' }
         Check  = $Name
@@ -31,58 +33,232 @@ function Check {
     }
 }
 
+# ------------------------------------------------------------
+# 1. IIS role
+# ------------------------------------------------------------
+
 Check 'IIS role installed' {
     (Get-WindowsFeature Web-Server).Installed
 } 'Run 1-Setup-IIS.ps1'
+
+# ------------------------------------------------------------
+# 2. W3SVC service
+# ------------------------------------------------------------
 
 Check 'W3SVC running' {
     (Get-Service W3SVC -ErrorAction Stop).Status -eq 'Running'
 } 'Run: Start-Service W3SVC'
 
+# ------------------------------------------------------------
+# 3. IIS website started
+# ------------------------------------------------------------
+
 Check "Site '$SiteName' started" {
     Import-Module WebAdministration
-    (Get-Website -Name $SiteName -ErrorAction Stop).State -eq 'Started'
+
+    (Get-Website `
+        -Name $SiteName `
+        -ErrorAction Stop).State -eq 'Started'
+
 } 'Run 1-Setup-IIS.ps1'
+
+# ------------------------------------------------------------
+# 4. IIS port binding
+# ------------------------------------------------------------
 
 Check "Site bound to port $Port" {
     Import-Module WebAdministration
-    [bool]((Get-Website -Name $SiteName).bindings.Collection |
-        Where-Object { $_.bindingInformation -like "*:$Port`:*" })
+
+    [bool](
+        (Get-Website `
+            -Name $SiteName `
+            -ErrorAction Stop).Bindings.Collection |
+        Where-Object {
+            $_.bindingInformation -like "*:$Port`:*"
+        }
+    )
+
 } "Re-run 1-Setup-IIS.ps1 -Port $Port"
 
+# ------------------------------------------------------------
+# 5. deployment.json
+# ------------------------------------------------------------
+
 Check 'deployment.json installed and edited' {
-    $d = Get-Content 'C:\LabTools\deployment.json' -Raw -ErrorAction Stop | ConvertFrom-Json
-    $d.owner -and $d.owner -ne 'your-name-here'
-} 'Edit deployment.json with your real details, then re-run 1-Setup-IIS.ps1'
+
+    $d = Get-Content `
+        'C:\LabTools\deployment.json' `
+        -Raw `
+        -ErrorAction Stop |
+    ConvertFrom-Json
+
+    $d.owner -and `
+        $d.owner -ne 'your-name-here'
+
+} 'Edit deployment.json and re-run 1-Setup-IIS.ps1'
+
+# ------------------------------------------------------------
+# 6. status.json exists
+# ------------------------------------------------------------
 
 Check 'status.json exists' {
-    Test-Path (Join-Path $PhysicalPath 'data\status.json')
+
+    Test-Path (
+        Join-Path `
+            $PhysicalPath `
+            'data\status.json'
+    )
+
 } 'Run 2-Collect-Status.ps1'
 
+# ------------------------------------------------------------
+# 7. status.json is recent
+# ------------------------------------------------------------
+
 Check 'status.json fresher than 3 minutes' {
-    ((Get-Date) - (Get-Item (Join-Path $PhysicalPath 'data\status.json') -ErrorAction Stop).LastWriteTime).TotalMinutes -lt 3
-} 'The scheduled task is not firing. Run 3-Schedule-Collector.ps1'
+
+    $statusFile = Join-Path `
+        $PhysicalPath `
+        'data\status.json'
+
+    if (-not (Test-Path $statusFile)) {
+        return $false
+    }
+
+    $age = (
+        (Get-Date) -
+        (Get-Item $statusFile).LastWriteTime
+    ).TotalMinutes
+
+    $age -lt 3
+
+} 'Run 3-Schedule-Collector.ps1 and check the scheduled task'
+
+# ------------------------------------------------------------
+# 8. Website returns HTTP 200
+# ------------------------------------------------------------
 
 Check 'Site answers HTTP 200 on localhost' {
-    (Invoke-WebRequest "http://localhost:$Port/" -UseBasicParsing -TimeoutSec 10).StatusCode -eq 200
-} 'Check bindings, and that no other site holds the port'
+
+    (
+        Invoke-WebRequest `
+            "http://localhost:$Port/" `
+            -UseBasicParsing `
+            -TimeoutSec 10
+    ).StatusCode -eq 200
+
+} 'Check IIS bindings and make sure port is not used by another site'
+
+# ------------------------------------------------------------
+# 9. status.json is served by IIS
+# ------------------------------------------------------------
 
 Check 'status.json is served over HTTP' {
-    (Invoke-WebRequest "http://localhost:$Port/data/status.json" -UseBasicParsing -TimeoutSec 10).StatusCode -eq 200
-} 'A 404.3 here means the .json MIME type is missing. Check site\web.config'
 
-Write-Host "`n  Deployment check — $env:COMPUTERNAME`n" -ForegroundColor Cyan
+    (
+        Invoke-WebRequest `
+            "http://localhost:$Port/data/status.json" `
+            -UseBasicParsing `
+            -TimeoutSec 10
+    ).StatusCode -eq 200
+
+} 'Check site web.config and JSON MIME type'
+
+# ------------------------------------------------------------
+# Display results
+# ------------------------------------------------------------
+
+Write-Host ""
+Write-Host "=============================================" -ForegroundColor Cyan
+Write-Host "        HEALTH CARD DEPLOYMENT CHECK" -ForegroundColor Cyan
+Write-Host "=============================================" -ForegroundColor Cyan
+Write-Host ""
+
+Write-Host "Computer: $env:COMPUTERNAME" -ForegroundColor Cyan
+Write-Host ""
+
 $results | Format-Table -AutoSize
 
-$failed = ($results | Where-Object Result -eq 'FAIL').Count
+# ------------------------------------------------------------
+# Count failures
+# ------------------------------------------------------------
+
+$failed = (
+    $results |
+    Where-Object {
+        $_.Result -eq 'FAIL'
+    }
+).Count
+
+$passed = (
+    $results |
+    Where-Object {
+        $_.Result -eq 'PASS'
+    }
+).Count
+
+Write-Host ""
+
+Write-Host "Passed: $passed / $($results.Count)" -ForegroundColor Green
+Write-Host "Failed: $failed / $($results.Count)" -ForegroundColor Yellow
+
+# ------------------------------------------------------------
+# Final result
+# ------------------------------------------------------------
+
 if ($failed -eq 0) {
-    Write-Host "All checks passed. Capture your screenshots and submit." -ForegroundColor Green
-} else {
-    Write-Host "$failed check(s) failed. Fix them and run this again." -ForegroundColor Yellow
+
+    Write-Host ""
+    Write-Host "=============================================" -ForegroundColor Green
+    Write-Host "             ALL CHECKS PASSED" -ForegroundColor Green
+    Write-Host "=============================================" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Capture your screenshots and submit." -ForegroundColor Green
+
+}
+else {
+
+    Write-Host ""
+    Write-Host "=============================================" -ForegroundColor Yellow
+    Write-Host "          SOME CHECKS FAILED" -ForegroundColor Yellow
+    Write-Host "=============================================" -ForegroundColor Yellow
+    Write-Host ""
+
+    Write-Host "Fix the failed checks above and run this script again." -ForegroundColor Yellow
 }
 
+# ------------------------------------------------------------
+# Show laptop test URL
+# ------------------------------------------------------------
+
 try {
-    $ip = (Invoke-RestMethod 'https://api.ipify.org' -TimeoutSec 8).ToString().Trim()
-    Write-Host "`nTest from your own laptop: http://$($ip):$Port/" -ForegroundColor Cyan
-    Write-Host "If that times out, your cloud firewall is blocking port $Port." -ForegroundColor Gray
-} catch { }
+
+    $ip = (
+        Invoke-RestMethod `
+            'https://api.ipify.org' `
+            -TimeoutSec 8
+    ).ToString().Trim()
+
+    Write-Host ""
+    Write-Host "=============================================" -ForegroundColor Cyan
+    Write-Host "             LAPTOP TEST" -ForegroundColor Cyan
+    Write-Host "=============================================" -ForegroundColor Cyan
+    Write-Host ""
+
+    Write-Host "Test from your own laptop:" -ForegroundColor Cyan
+    Write-Host "http://$($ip):$Port/" -ForegroundColor Green
+
+    Write-Host ""
+    Write-Host "If the laptop cannot connect, check the AWS Security Group." -ForegroundColor Yellow
+    Write-Host "TCP port $Port must allow your public IP only." -ForegroundColor Yellow
+
+}
+catch {
+
+    Write-Host ""
+    Write-Host "Could not determine the public IP using api.ipify.org." -ForegroundColor Yellow
+
+}
+
+Write-Host ""
+Write-Host "Verification completed." -ForegroundColor Green
